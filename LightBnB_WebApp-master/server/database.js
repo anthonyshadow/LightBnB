@@ -30,8 +30,12 @@ const getUserWithEmail = function(email) {
       return res.rows[0];
     } else {
       return null
-    });
-  }
+    }
+  })
+  .catch(error => {
+    console.log(error);
+  });
+}
 exports.getUserWithEmail = getUserWithEmail;
 
 /**
@@ -40,7 +44,22 @@ exports.getUserWithEmail = getUserWithEmail;
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithId = function(id) {
-  return Promise.resolve(users[id]);
+  const getUserWithIdQuery = `
+  SELECT *
+  FROM users
+  WHERE id = $1;`
+
+  return pool.query(getUserWithIdQuery, [id])
+  .then(res => {
+    if (res.rows) {
+      return res.rows[0];
+    } else {
+      return null;
+    }
+  })
+  .catch(error => {
+    console.log(error);
+  });
 }
 exports.getUserWithId = getUserWithId;
 
@@ -51,10 +70,15 @@ exports.getUserWithId = getUserWithId;
  * @return {Promise<{}>} A promise to the user.
  */
 const addUser =  function(user) {
-  const userId = Object.keys(users).length + 1;
-  user.id = userId;
-  users[userId] = user;
-  return Promise.resolve(user);
+  const { name, email, password } = user;
+  const addUserQuery = 
+  `INSERT INTO users (name, email, password) 
+  VALUES ($1, $2, $3)
+  RETURNING *;`
+
+  return pool.query(addUserQuery, [name, email, password])
+  .then(res => res.rows)
+  .catch(error => console.log(error));
 }
 exports.addUser = addUser;
 
